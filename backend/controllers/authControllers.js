@@ -1,7 +1,7 @@
 // import { User } from "../models/userSchema";
 
 import User from "../models/userSchema.js";
-import bcryptjs from "bcryptjs";
+import bcrypt from "bcryptjs";
 
 import generateJWT from "../utils/generateJWT.js";
 
@@ -25,7 +25,7 @@ export const signin = async (req, res) => {
 
     // hash password
 
-    const hashedPssw = await bcryptjs.hash(password, 10);
+    const hashedPssw = await bcrypt.hash(password, 10);
 
     // set avatars
     const boyStandartAvatar = `https://avatar.iran.liara.run/public/boy?username=${username}`;
@@ -63,12 +63,38 @@ export const signin = async (req, res) => {
   }
 };
 
-export const login = (req, res) => {
-  console.log("It's a login controller");
-  res.send("It's a login controller");
+export const login = async (req, res) => {
+  try {
+    // console.log("================ new login! =====================");
+    const { username, password } = req.body;
+    const user = await User.findOne({ username });
+
+    const comparePssw = await bcrypt.compare(password, user?.password || "");
+
+    if (!user || !comparePssw) {
+      return res.status(400).json({ error: "Invalid credentials!" });
+    }
+
+    generateJWT(user._id, res);
+
+    res.status(200).json({
+      _id: user._id,
+      fullName: user.fullName,
+      username: user.username,
+      profilePic: user.profilePic,
+    });
+  } catch (error) {
+    console.log("error in login controller: ", error.message);
+    res.status(500).json("Internal Server Error");
+  }
 };
 
 export const logout = (req, res) => {
-  console.log("It's a logout controller");
-  res.send("It's a logout controller");
+  try {
+    res.cookie("jwt", "", { maxAge: 0 });
+    res.status(200).json("loggedout successfully!");
+  } catch (error) {
+    console.log("error in logout controller: ", error.message);
+    res.status(500).json("Internal Server Error");
+  }
 };
