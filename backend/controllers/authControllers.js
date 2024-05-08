@@ -1,4 +1,9 @@
-import User from "../models/userSchema";
+// import { User } from "../models/userSchema";
+
+import User from "../models/userSchema.js";
+import bcryptjs from "bcryptjs";
+
+import generateJWT from "../utils/generateJWT.js";
 
 export const signin = async (req, res) => {
   try {
@@ -18,7 +23,9 @@ export const signin = async (req, res) => {
       return res.status(400).json({ error: "Username is already taken!" });
     }
 
-    // hash passwords
+    // hash password
+
+    const hashedPssw = await bcryptjs.hash(password, 10);
 
     // set avatars
     const boyStandartAvatar = `https://avatar.iran.liara.run/public/boy?username=${username}`;
@@ -29,23 +36,29 @@ export const signin = async (req, res) => {
     const newUser = new User({
       fullName,
       username,
-      password,
+      password: hashedPssw,
       gender,
-      profilePic: gender === girl ? girlStandartAvatar : boyStandartAvatar,
+      profilePic: gender === "girl" ? girlStandartAvatar : boyStandartAvatar,
     });
 
     // save new user to db
 
-    await newUser.save();
+    if (newUser) {
+      await newUser.save();
 
-    res.status(201).json({
-      _id: newUser.id,
-      fullName: newUser.fullName,
-      username: newUser.username,
-      profilePic: newUser.profilePic,
-    });
+      generateJWT(newUser._id, res);
+
+      res.status(201).json({
+        _id: newUser.id,
+        fullName: newUser.fullName,
+        username: newUser.username,
+        profilePic: newUser.profilePic,
+      });
+    } else {
+      res.status(400).json({ error: "Incorrect some user data!" });
+    }
   } catch (error) {
-    console.log("error in signup controller ", error.message);
+    console.log("error in signup controller: ", error.message);
     res.status(500).json("Internal Server Error");
   }
 };
