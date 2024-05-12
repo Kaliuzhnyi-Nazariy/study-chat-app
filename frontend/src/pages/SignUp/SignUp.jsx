@@ -3,12 +3,13 @@
 import { Link } from "react-router-dom";
 import GenderCheckBox from "./GenderCheckBox";
 import { useState } from "react";
+import useSignUp from "../../hooks/index.js";
 
 const SignUp = () => {
   const [inputs, setInputs] = useState({
     fullName: "",
     username: "",
-    passsword: "",
+    password: "",
     confirmPassword: "",
     gender: "",
   });
@@ -17,9 +18,14 @@ const SignUp = () => {
     setInputs({ ...inputs, gender });
   };
 
-  const handleSubmit = (e) => {
+  const {
+    // loading,
+    signUp,
+  } = useSignUp();
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log(inputs);
+    await signUp(inputs);
   };
 
   return (
@@ -74,11 +80,11 @@ const SignUp = () => {
               type="password"
               placeholder="Enter password"
               className="w-full input input-bordered h-10 text-gray-100"
-              value={inputs.passsword}
+              value={inputs.password}
               onChange={(e) =>
                 setInputs({
                   ...inputs,
-                  passsword: e.target.value,
+                  password: e.target.value,
                 })
               }
             />
